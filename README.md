@@ -21,3 +21,6 @@ Included components:
 * TileList (support pull to refresh, infinite paging)
 * Navigation (history manager, back button)
 * Accordion
+
+Status:
+Under developing, no documentation, not recommend use in production project.
