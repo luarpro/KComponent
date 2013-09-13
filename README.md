@@ -11,7 +11,7 @@ Because it is lightweight but customizable, it does not provide UI redraw automa
 Included components:
 * Button
 * ComboBox
-* Label
+* Label (support multilines, abbreviation with ellipsis)
 * Paging Circle ( ● ○ ○ )
 * TextInput
 * TextArea
