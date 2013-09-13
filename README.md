@@ -6,7 +6,7 @@ Existing popular AIR mobile component is Feathers UI based on Starling framework
 The Only Objective:
 * lightweight and launch fast
 
-Because it is lightweight but customizable, it does not provide UI redraw automatically. If you have made any change on UI, you have to redraw UI manually.
+Because it is lightweight but customizable, it does not provide UI redraw automatically. If you have made any change on UI, you have to call component public redraw method manually.
 
 Included components:
 * Button
