@@ -7,3 +7,17 @@ The Only Objective:
 * lightweight and launch fast
 
 Because it is lightweight but customizable, it does not provide UI redraw automatically. If you have made any change on UI, you have to redraw UI manually.
+
+Included components:
+* Button
+* ComboBox
+* Label
+* Paging Circle ( ● ○ ○ )
+* TextInput
+* TextArea
+* Divider (line, edge)
+* ToggleButton (on/off)
+* List (support pull to refresh, infinite paging)
+* TileList (support pull to refresh, infinite paging)
+* Navigation (history manager, back button)
+* Accordion
