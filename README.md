@@ -24,3 +24,6 @@ Included components:
 
 Status:
 in between alpha and beta, no documentation, not recommend use in production project.
+
+Dependency Class:
+TweenMax: http://www.greensock.com/tweenmax/
