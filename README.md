@@ -23,4 +23,4 @@ Included components:
 * Accordion
 
 Status:
-Under developing, no documentation, not recommend use in production project.
+in between alpha and beta, no documentation, not recommend use in production project.
