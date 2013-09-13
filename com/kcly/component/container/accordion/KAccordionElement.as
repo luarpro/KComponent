@@ -39,6 +39,10 @@ package com.kcly.component.container.accordion {
 			return _tabAreaH;
 		}
 		
+		public function get length():int {
+			return container.numChildren;
+		}
+		
 		public function init(tabAreaW:int, _tabH:int, gap:int = 0):void {
 			tabH = _tabH;
 			
@@ -56,6 +60,10 @@ package com.kcly.component.container.accordion {
 
 		public function addElement(mc:*):void {
 			container.addChild(mc);
+		}
+		
+		public function addElementAt(mc:*, no:int):void {
+			container.addChildAt(mc, no);
 		}
 		
 		public function show(ypos:int):void {
