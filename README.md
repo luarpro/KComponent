@@ -1,7 +1,7 @@
 KComponent
 ==========
 
-Existing popular AIR mobile component is Feathers UI based on Starling framework. In old phone model, e.g. iPhone3GS. Starling framework cause the app launch time extremely long. Therefore, I develop a lightweight AIR Mobile Component from scratch, without based on Stage3D, you can use in any phone models or platforms. 
+Existing popular AIR mobile component is Feathers UI based on Starling framework. In old phone model, e.g. iPhone3GS. Starling framework cause the app launch time extremely long. Therefore, I develop a lightweight AIR mobile component from scratch, without based on Stage3D, you can use in any phone models or platforms. 
 
 The Only Objective:
 * lightweight and launch fast
