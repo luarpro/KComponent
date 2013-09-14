@@ -3,6 +3,7 @@ package com.kcly.component.control {
 	import com.kcly.component.KCore;
 	import flash.display.Shape;
 	import flash.display.Sprite;
+	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
@@ -15,7 +16,11 @@ package com.kcly.component.control {
 		private var dragger:Sprite;
 		private var _isactive:Boolean;
 		private var maxX:int;
+		private var centerX:Number;
 		private var borderW:int;
+		private var halfBorderW:Number;
+		private var isTouchMove:Boolean;
+		private var mouseDownX:Number;
 		
 		public function KToggleButton(onStr:String, offStr:String) {
 			
@@ -47,7 +52,9 @@ package com.kcly.component.control {
 			var circleCenter:Number = radius / 2;
 			var offsetX:int = w - circleCenter;
 			borderW = w + circleCenter;
+			halfBorderW = borderW / 2;
 			maxX = offsetX;
+			centerX = maxX / 2;
 			
 			masker = new Shape;
 			masker.graphics.beginFill(0, 0);
@@ -57,6 +64,7 @@ package com.kcly.component.control {
 			container = new Sprite;
 			container.mouseChildren = false;
 			container.addEventListener(MouseEvent.CLICK, onClick)
+			container.addEventListener(MouseEvent.MOUSE_DOWN, onTouchDown)
 			container.mask = masker;
 			addChild(container);
 
@@ -90,11 +98,46 @@ package com.kcly.component.control {
 			maskBorder.graphics.drawRoundRect(0, 0, borderW, radius, radius, radius); 
 			addChild(maskBorder);
 			
+			addEventListener(Event.REMOVED_FROM_STAGE, onRemoved)
+		}
+		
+		private function onRemoved(evt:Event):void {
+			removeEventListener(Event.REMOVED_FROM_STAGE, onRemoved);
+			container.removeEventListener(MouseEvent.CLICK, onClick);
+			container.removeEventListener(MouseEvent.MOUSE_DOWN, onTouchDown);
+			stage.removeEventListener(MouseEvent.MOUSE_UP, onTouchUp);
+			removeEventListener(MouseEvent.MOUSE_MOVE, onTouchMoving);
+		}
+		
+		private function onTouchDown(evt:MouseEvent):void {
+			mouseDownX = container.mouseX;
+			isTouchMove = false;
+			stage.addEventListener(MouseEvent.MOUSE_UP, onTouchUp);
+			addEventListener(MouseEvent.MOUSE_MOVE, onTouchMoving);
+		}
+		
+		private function onTouchMoving(evt:MouseEvent):void {
+			var posX:int = Math.min(maxX, Math.max(0, this.mouseX-mouseDownX));
+			container.x = posX;
+			isTouchMove = true;
+		}
+		
+		private function onTouchUp(evt:MouseEvent):void {
+			stage.removeEventListener(MouseEvent.MOUSE_UP, onTouchUp);
+			removeEventListener(MouseEvent.MOUSE_MOVE, onTouchMoving);
+			if (isTouchMove) {
+				_isactive = (this.mouseX > halfBorderW);
+				updateDragger(true);
+			}
 		}
 		
 		private function onClick(evt:MouseEvent):void {
-			_isactive = !_isactive;
-			updateDragger(true);
+			stage.removeEventListener(MouseEvent.MOUSE_UP, onTouchUp);
+			removeEventListener(MouseEvent.MOUSE_MOVE, onTouchMoving);
+			if (!isTouchMove) {
+				_isactive = !_isactive;
+				updateDragger(true);
+			}
 		}
 		
 		public function get isactive():Boolean {
