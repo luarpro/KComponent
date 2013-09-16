@@ -10,21 +10,33 @@ package com.kcly.component.control {
 	import flash.text.TextFormat;
 	
 	public class KToggleButton extends Sprite {
+		public static var ON:String = "on";
+		public static var OFF:String = "off";
+		
 		private var masker:Shape;
 		private var container:Sprite;
-		private var maskBorder:Shape;
-		private var dragger:Sprite;
+		private var maskBorder:Sprite;
+		private var dragger:Shape;
+		
 		private var _isactive:Boolean;
+		
+		private var _width:int;
+		private var _height:int;
 		private var maxX:int;
 		private var centerX:Number;
-		private var borderW:int;
-		private var halfBorderW:Number;
+		private var halfWidth:Number;
+		
 		private var isTouchMove:Boolean;
 		private var mouseDownX:Number;
 		
-		public function KToggleButton(onStr:String, offStr:String) {
-			
-			var radius:int = 50 * KCore.scale;
+		public function KToggleButton(onStr:String=null, offStr:String=null) {
+			if (!onStr) {
+				onStr = KToggleButton.ON;
+			}
+			if (!offStr) {
+				offStr = KToggleButton.OFF;
+			}
+			_height = 50 * KCore.scale;
 			
 			var on_tf:TextField = new TextField()
 			on_tf.embedFonts = KCore.embedFonts;
@@ -49,62 +61,66 @@ package com.kcly.component.control {
 			on_tf.mouseEnabled = off_tf.mouseEnabled = false;
 			
 			var w:int = Math.max(on_tf.width, off_tf.width)*2;
-			var circleCenter:Number = radius / 2;
+			var circleCenter:Number = _height / 2;
 			var offsetX:int = w - circleCenter;
-			borderW = w + circleCenter;
-			halfBorderW = borderW / 2;
+			_width = w + circleCenter;
+			halfWidth = _width / 2;
 			maxX = offsetX;
 			centerX = maxX / 2;
 			
 			masker = new Shape;
 			masker.graphics.beginFill(0, 0);
-			masker.graphics.drawRoundRect(0, 0, borderW, radius, radius, radius);
+			masker.graphics.drawRoundRect(0, 0, _width, _height, _height, _height);
 			addChild(masker);
 			
 			container = new Sprite;
-			container.mouseChildren = false;
-			container.addEventListener(MouseEvent.CLICK, onClick)
-			container.addEventListener(MouseEvent.MOUSE_DOWN, onTouchDown)
 			container.mask = masker;
 			addChild(container);
 
 			var tfBase:Shape = new Shape
 			tfBase.graphics.beginFill(KCore.themeColor);
-			tfBase.graphics.drawRect(0, 0, w, radius);
+			tfBase.graphics.drawRect(0, 0, w, _height);
 			tfBase.graphics.beginFill(0xffffff);
-			tfBase.graphics.drawRect(w, 0, w, radius);
+			tfBase.graphics.drawRect(w, 0, w, _height);
 			tfBase.graphics.endFill();
 			tfBase.x = -offsetX;
 			
 			var tfW:int = w - circleCenter;
 			on_tf.x = (tfW - on_tf.width) / 2 - offsetX;
 			off_tf.x = (tfW - off_tf.width) / 2 + w/2;
-			on_tf.y = (radius-on_tf.height) / 2;
-			off_tf.y = (radius-off_tf.height) / 2;
+			on_tf.y = (_height-on_tf.height) / 2;
+			off_tf.y = (_height-off_tf.height) / 2;
 			
 			container.addChild(tfBase);
 			container.addChild(on_tf);
 			container.addChild(off_tf);
 			
-			dragger = new Sprite;
-			dragger.graphics.beginFill(0xffffff);
-			dragger.graphics.lineStyle(0, KCore.lineColor);
+			var borderWidth:int = 0;
 			
+			dragger = new Shape;
+			dragger.graphics.beginFill(0xffffff);
+			dragger.graphics.lineStyle(borderWidth, KCore.textLightColor);
 			dragger.graphics.drawCircle(circleCenter, circleCenter, circleCenter);
 			container.addChild(dragger);
+			container.mouseChildren = container.mouseEnabled = false;
 			
-			maskBorder = new Shape;
-			maskBorder.graphics.lineStyle(0, KCore.lineColor);
-			maskBorder.graphics.drawRoundRect(0, 0, borderW, radius, radius, radius); 
-			addChild(maskBorder);
+			maskBorder = new Sprite;
+			maskBorder.graphics.beginFill(0xffff00, 0);
+			maskBorder.graphics.drawRoundRect(-_height/2,-_height/2, _width+_height, _height*2, _height*2, _height*2); 
+			maskBorder.graphics.lineStyle(borderWidth, KCore.textLightColor);
+			maskBorder.graphics.beginFill(0xffffff, 1);
+			maskBorder.graphics.drawRoundRect(0, 0, _width, _height, _height, _height); 
+			addChildAt(maskBorder, 0);
 			
+			maskBorder.addEventListener(MouseEvent.CLICK, onClick)
+			maskBorder.addEventListener(MouseEvent.MOUSE_DOWN, onTouchDown)
 			addEventListener(Event.REMOVED_FROM_STAGE, onRemoved)
 		}
 		
 		private function onRemoved(evt:Event):void {
 			removeEventListener(Event.REMOVED_FROM_STAGE, onRemoved);
-			container.removeEventListener(MouseEvent.CLICK, onClick);
-			container.removeEventListener(MouseEvent.MOUSE_DOWN, onTouchDown);
+			maskBorder.removeEventListener(MouseEvent.CLICK, onClick);
+			maskBorder.removeEventListener(MouseEvent.MOUSE_DOWN, onTouchDown);
 			stage.removeEventListener(MouseEvent.MOUSE_UP, onTouchUp);
 			removeEventListener(MouseEvent.MOUSE_MOVE, onTouchMoving);
 		}
@@ -126,8 +142,9 @@ package com.kcly.component.control {
 			stage.removeEventListener(MouseEvent.MOUSE_UP, onTouchUp);
 			removeEventListener(MouseEvent.MOUSE_MOVE, onTouchMoving);
 			if (isTouchMove) {
-				_isactive = (this.mouseX > halfBorderW);
+				_isactive = (this.mouseX > halfWidth);
 				updateDragger(true);
+				dispatchEvent(new Event(Event.CHANGE));
 			}
 		}
 		
@@ -137,7 +154,16 @@ package com.kcly.component.control {
 			if (!isTouchMove) {
 				_isactive = !_isactive;
 				updateDragger(true);
+				dispatchEvent(new Event(Event.CHANGE));
 			}
+		}
+		
+		public function get value():int {
+			return (_isactive) ? 1 : 0;
+		}
+		
+		public function set value(no:int):void {
+			isactive = (no == 1);
 		}
 		
 		public function get isactive():Boolean {
@@ -161,7 +187,11 @@ package com.kcly.component.control {
 		}
 		
 		override public function get width():Number {
-			return borderW;
+			return _width;
+		}
+		
+		override public function get height():Number {
+			return _height;
 		}
 	}
 }

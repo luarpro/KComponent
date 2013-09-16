@@ -129,6 +129,11 @@ package com.kcly.component.control {
 			return picker.selectedData;
 		}
 		
+		public function set selectedData(val:*):void {
+			picker.selectedData = val;
+			label = picker.selectedLabel;
+		}
+		
 		public function get selectedItem():* {
 			return picker.selectedItem;
 		}

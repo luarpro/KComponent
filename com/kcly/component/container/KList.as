@@ -4,6 +4,7 @@ package com.kcly.component.container {
 	import com.kcly.component.KCore;
 	import com.kcly.component.renderer.KItemRenderer;
 	import com.kcly.component.scroll.IOSScrollArea;
+	import flash.display.MovieClip;
 	import flash.display.Sprite;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
@@ -32,14 +33,16 @@ package com.kcly.component.container {
 		private var _paddingH2:int;
 		
 		public var curInDeleteItem:KItemRenderer;
-		private var lastDownItem:KItemRenderer;
-		private var lazyInit:Boolean;
 		protected var allowPullRefresh:Boolean;
 		protected var allowPaging:Boolean;
+		private var lastDownItem:KItemRenderer;
+		private var lazyInit:Boolean;
 		private var inEditMode:Boolean = false;
 		private var _data:*;
 		private var rendererClass:Class;
+		private var _loading:MovieClip;
 		
+		protected var loadingLen:int = 0;
 		protected var footerLen:int = 0;
 		protected var footerItem:Sprite;
 		
@@ -149,8 +152,12 @@ package com.kcly.component.container {
 		private function onItemDown(evt:MouseEvent):void {
 			if (!inEditMode) {
 				lastDownItem = evt.currentTarget as KItemRenderer
-				if (!isFloat) {
-					selectedIndex = container.getChildIndex(lastDownItem);
+				if (lastDownItem.allowSelect) {
+					if (!isFloat) {
+						selectedIndex = container.getChildIndex(lastDownItem);
+					}
+				} else {
+					lastDownItem = null;
 				}
 			}
 		}
@@ -194,7 +201,7 @@ package com.kcly.component.container {
 		
 		public function set edit(bool:Boolean):void {
 			inEditMode = bool;
-			var len:int = container.numChildren - footerLen
+			var len:int = container.numChildren - footerLen - loadingLen;
 			for (var i:int; i < len; i++) {
 				var item:KItemRenderer = container.getChildAt(i) as KItemRenderer
 				item.edit = bool;
@@ -202,8 +209,18 @@ package com.kcly.component.container {
 			lastDownItem = null;
 		}
 		
+		// e.g. btn_edit
+		public function set footer(mc:Sprite):void {
+			if (footerItem) {
+				container.removeChild(footerItem);
+			}
+			footerLen = 1;
+			footerItem = mc
+			container.addChild(footerItem);
+		}
+		
 		public function get length():int {
-			return (!lazyInit) ? container.numChildren-footerLen : _data.length;
+			return (!lazyInit) ? container.numChildren - footerLen - loadingLen : _data.length;
 		}
 
 		public function set containerName(str:String):void {
@@ -217,6 +234,29 @@ package com.kcly.component.container {
 					return item.data;
 				} else {
 					return _data[_selectedIndex].data
+				}
+			}
+		}
+		
+		public function set selectedData(val:*):void {
+			var len:int = length;
+			var i:int;
+			if (!lazyInit) {
+				for (i = 0; i < len; i++) {
+					var item:KItemRenderer = container.getChildAt(i) as KItemRenderer
+					trace ('list selectedData0', i, item.data, val, lazyInit)
+					if (item.data == val) {
+						selectedIndex = i;
+						return;
+					}
+				}
+			} else {
+				for (i = 0; i < len; i++) {
+					trace ('list selectedData1', i, _data[i].scid, val, lazyInit)
+					if (_data[i].scid == val) {
+						selectedIndex = i;
+						return;
+					}
 				}
 			}
 		}
@@ -252,7 +292,7 @@ package com.kcly.component.container {
 		
 		public function set selectedIndex (no:int):void {
 			var item:KItemRenderer
-			var len:int = container.numChildren - footerLen;
+			var len:int = container.numChildren - footerLen - loadingLen;
 			if (_selectedIndex >= 0 && _selectedIndex<len) {
 				item = container.getChildAt(_selectedIndex) as KItemRenderer
 				if (item) {
@@ -351,18 +391,9 @@ package com.kcly.component.container {
 		public function getItemIndex(mc:KItemRenderer):int {
 			return container.getChildIndex(mc);
 		}
-		
-		public function set footer(mc:Sprite):void {
-			if (footerItem) {
-				container.removeChild(footerItem);
-			}
-			footerLen = 1;
-			footerItem = mc
-			container.addChild(footerItem);
-		}
-		
+
 		public function removeAll():void {
-			for (var i:int = container.numChildren - 1 - footerLen; i >= 0; i--) {
+			for (var i:int = container.numChildren - 1 - footerLen - loadingLen; i >= 0; i--) {
 				var item:KItemRenderer = container.getChildAt(i) as KItemRenderer
 				item.removeEventListener(MouseEvent.MOUSE_DOWN, onItemDown)
 				item.removeEventListener(MouseEvent.MOUSE_UP, onItemUp)
@@ -377,8 +408,18 @@ package com.kcly.component.container {
 			refresh(true);
 		}
 		
+		protected function refreshFooterLoading():void {
+			if (footerItem) {
+				container.addChild(footerItem)
+			}
+			if (_loading) {
+				container.addChild(_loading)
+			}
+		}
+		
 		public function refresh(useTween:Boolean=false, startIndex:int=0):void {
-			var len:int = container.numChildren - footerLen;
+			refreshFooterLoading();
+			var len:int = container.numChildren - footerLen - loadingLen;
 			var offsetY:int = 0;
 			for (var i:int = startIndex; i < len; i++) {
 				var item:KItemRenderer = container.getChildAt(i) as KItemRenderer
@@ -392,15 +433,8 @@ package com.kcly.component.container {
 				offsetY += item.height;
 			}
 
-			if (footerItem) {
-				offsetY += KCore.paddingH;
-				if (!useTween) {
-					footerItem.y = offsetY;
-				} else {
-					TweenMax.to(footerItem, KCore.tweenDur, {y:offsetY, onComplete:onContainerTweeenDone})
-				}
-				offsetY += footerItem.height + KCore.paddingH*2;
-			}
+			offsetY = positionFooterLoading(useTween, offsetY);
+			
 			container.graphics.clear();
 			container.graphics.beginFill(0xff0000, 0);
 			container.graphics.drawRect(0, 0, 1, offsetY);
@@ -419,6 +453,28 @@ package com.kcly.component.container {
 			}
 		}
 		
+		protected function positionFooterLoading(useTween:Boolean, offsetY:int):int {
+			if (footerItem) {
+				offsetY += KCore.paddingH;
+				if (!useTween) {
+					footerItem.y = offsetY;
+				} else {
+					TweenMax.to(footerItem, KCore.tweenDur, {y:offsetY, onComplete:onContainerTweeenDone})
+				}
+				offsetY += footerItem.height + KCore.paddingH*2;
+			}
+			if (_loading) {
+				if (!footerItem) {
+					_loading.y = offsetY + KCore.paddingH;
+				} else {
+					_loading.y = offsetY;
+				}
+				offsetY += _loading.height;
+				_loading.x = (baseW - _loading.width) / 2;
+			}
+			return offsetY;
+		}
+		
 		private function onContainerTweeenDone():void {
 			if (stage) {
 				scroll.refresh();
@@ -432,6 +488,41 @@ package com.kcly.component.container {
 			curInDeleteItem = evt.target as KItemRenderer
 			curInDeleteItem.deleteMode = true;
 			evt.stopPropagation()
+		}
+				
+		public function setLoadingIcon(mc:MovieClip = null):void {
+			var needRreshScroll:int = 0;
+			if (_loading) {
+				container.removeChild(_loading);
+				if (!mc) {
+					needRreshScroll = _loading.height;
+				}
+			}
+			if (mc) {
+				_loading = mc;
+				_loading.scaleX = _loading.scaleY = KCore.scale;
+				loadingLen = 1;
+				container.addChild(_loading);
+				showHideLoading(false);
+			} else {
+				_loading = null;
+				loadingLen = 0;
+			}
+			if (needRreshScroll>0) {
+				container.y += needRreshScroll;
+				scroll.refresh();
+			}
+		}
+		
+		public function showHideLoading(bool:Boolean):void {
+			if (_loading) {
+				_loading.visible = bool;
+				if (bool) {
+					_loading.play();
+				} else {
+					_loading.stop();
+				}
+			}
 		}
 		
 		public function scrollToSelection():void {

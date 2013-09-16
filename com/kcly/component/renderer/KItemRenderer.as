@@ -37,6 +37,7 @@ package com.kcly.component.renderer {
 		
 		public var data:*;
 		public var obj:*;
+		public var allowSelect:Boolean = true
 		
 		public function KItemRenderer(str:String = "", paddingH:int = 0, paddingV:int = 0, w:int = 0, h:int = 0, highlightW:int = 0, highlightH:int = 0, useEllipsis:Boolean = false, deletable:Boolean=false, editable:Boolean=false, delIconClass:Bitmap=null) {
 			this.paddingH = paddingH;

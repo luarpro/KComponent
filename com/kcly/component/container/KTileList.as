@@ -35,8 +35,9 @@ package com.kcly.component.container {
 			offsetX = _paddingH;
 		}
 		
-		override public function refresh(useTween:Boolean=false, startIndex:int=0):void {
-			var len:int = container.numChildren - footerLen;
+		override public function refresh(useTween:Boolean = false, startIndex:int = 0):void {
+			refreshFooterLoading();
+			var len:int = container.numChildren - footerLen - loadingLen;
 			
 			for (var i:int = startIndex; i < len; i++) {
 				var item:KItemRenderer = container.getChildAt(i) as KItemRenderer
@@ -50,6 +51,8 @@ package com.kcly.component.container {
 				}
 				offsetX += item.width + gapH;
 			}
+			positionFooterLoading(useTween, (item) ? offsetY + item.height: offsetY);
+
 			var containerH:int = offsetY + gapV + _paddingV;
 			if (item) {
 				containerH += item.height;
