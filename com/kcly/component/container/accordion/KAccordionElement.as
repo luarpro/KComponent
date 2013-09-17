@@ -66,6 +66,14 @@ package com.kcly.component.container.accordion {
 			container.addChildAt(mc, no);
 		}
 		
+		public function removeElement(mc:*):void {
+			container.removeChild(mc);
+		}
+		
+		public function removeElementAt(no:int):void {
+			container.removeChildAt(no);
+		}
+		
 		public function show(ypos:int):void {
 			container.visible = true;
 			TweenMax.to(this, KCore.tweenDur2, { y:ypos } )

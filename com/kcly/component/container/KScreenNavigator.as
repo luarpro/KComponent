@@ -114,6 +114,10 @@ package com.kcly.component.container {
 				onBackClick();
 		}
 		
+		public function getPreviousScreen():KScreen {
+			return contentA[curScreenIndex - 1];
+		}
+		
 		public function removeAllScreensExceptRoot():void {
 			var len:int = contentA.length - 1;
 			for (var i:int = 1; i < len; i++ ) {

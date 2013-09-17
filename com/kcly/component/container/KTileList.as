@@ -1,8 +1,9 @@
 package com.kcly.component.container {
+	import com.greensock.TweenMax;
 	import com.kcly.component.KCore;
 	import com.kcly.component.renderer.KItemRenderer;
-	import com.greensock.TweenMax;
 	import flash.events.Event;
+	import flash.utils.setTimeout;
 	
 	public class KTileList extends KList {
 		private var gapH:int;
@@ -35,6 +36,18 @@ package com.kcly.component.container {
 			offsetX = _paddingH;
 		}
 		
+		override public function removeItemAt(no:int):void {
+			if (no > 0) {
+				var item:KItemRenderer = container.getChildAt(no) as KItemRenderer
+				offsetY = item.y;
+				offsetX = item.x;
+			} else {
+				offsetY = _paddingV;
+				offsetX = _paddingH;
+			}
+			super.removeItemAt(no);
+		}
+		
 		override public function refresh(useTween:Boolean = false, startIndex:int = 0):void {
 			refreshFooterLoading();
 			var len:int = container.numChildren - footerLen - loadingLen;
@@ -65,12 +78,18 @@ package com.kcly.component.container {
 			if (useTween) {
 				var diff:int = scroll.height - offsetY;
 				if (container.y < diff) {
-					TweenMax.to(container, KCore.tweenDur, {y:Math.min(0,diff)})
+					var obj:Object = { y:Math.min(0, diff) };
+					if (!footerItem) {
+						obj.onComplete = onContainerTweeenDone;
+					}
+					TweenMax.to(container, KCore.tweenDur, obj);
+				} else {
+					setTimeout(onContainerTweeenDone, KCore.tweenDur * 1000);
 				}
 			} else if (stage) {
 				scroll.refresh();
 			}
-			if (allowPaging && len>0 && container.height < scroll.height) {
+			if (allowPaging && len>0 && offsetY <= scroll.height) {
 				dispatchEvent(new Event(KList.NEED_PAGING));
 			}
 		}

@@ -9,6 +9,7 @@ package com.kcly.component.container {
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.events.TouchEvent;
+	import flash.utils.setTimeout;
 	
 	public class KList extends Sprite {
 		public static var NEED_PAGING:String = "KListNeedPaging";
@@ -33,6 +34,7 @@ package com.kcly.component.container {
 		private var _paddingH2:int;
 		
 		public var curInDeleteItem:KItemRenderer;
+		public var isFixedHeight:Boolean = true;
 		protected var allowPullRefresh:Boolean;
 		protected var allowPaging:Boolean;
 		private var lastDownItem:KItemRenderer;
@@ -149,7 +151,7 @@ package com.kcly.component.container {
 		}
 
 		
-		private function onItemDown(evt:MouseEvent):void {
+		protected function onItemDown(evt:MouseEvent):void {
 			if (!inEditMode) {
 				lastDownItem = evt.currentTarget as KItemRenderer
 				if (lastDownItem.allowSelect) {
@@ -162,7 +164,7 @@ package com.kcly.component.container {
 			}
 		}
 		
-		private function onItemUp(evt:MouseEvent):void {
+		protected function onItemUp(evt:MouseEvent):void {
 			var item:KItemRenderer = evt.currentTarget as KItemRenderer
 			if (item == lastDownItem) {
 				selectedIndex = container.getChildIndex(item);
@@ -402,10 +404,19 @@ package com.kcly.component.container {
 		}
 		
 		public function removeItem(item:KItemRenderer):void {
-			item.removeEventListener(MouseEvent.MOUSE_DOWN, onItemDown);
-			item.removeEventListener(MouseEvent.MOUSE_UP, onItemUp);
-			container.removeChild(item);
-			refresh(true);
+			var no:int = container.getChildIndex(item)
+			removeItemAt(no);
+		}
+		
+		public function removeItemAt(no:int):void {
+			var len:int = container.numChildren - footerLen - loadingLen;
+			if (no>=0 && no < len) {
+				var item:KItemRenderer = container.getChildAt(no) as KItemRenderer
+				item.removeEventListener(MouseEvent.MOUSE_DOWN, onItemDown);
+				item.removeEventListener(MouseEvent.MOUSE_UP, onItemUp);
+				container.removeChild(item);
+				refresh(true, no);
+			}
 		}
 		
 		protected function refreshFooterLoading():void {
@@ -421,8 +432,17 @@ package com.kcly.component.container {
 			refreshFooterLoading();
 			var len:int = container.numChildren - footerLen - loadingLen;
 			var offsetY:int = 0;
+			var item:KItemRenderer;
+			if (isFixedHeight) {
+				if (len>1 && startIndex>0) {
+					item = container.getChildAt(0) as KItemRenderer
+					offsetY = startIndex * item.height;
+				}
+			} else {
+				startIndex = 0
+			}
 			for (var i:int = startIndex; i < len; i++) {
-				var item:KItemRenderer = container.getChildAt(i) as KItemRenderer
+				item = container.getChildAt(i) as KItemRenderer
 				if (!useTween) {
 					item.y = offsetY;
 				} else {
@@ -443,12 +463,18 @@ package com.kcly.component.container {
 			if (useTween) {
 				var diff:int = scroll.height - offsetY;
 				if (container.y < diff) {
-					TweenMax.to(container, KCore.tweenDur, {y:Math.min(0,diff)})
+					var obj:Object = { y:Math.min(0, diff) };
+					if (!footerItem) {
+						obj.onComplete = onContainerTweeenDone;
+					}
+					TweenMax.to(container, KCore.tweenDur, obj);
+				} else {
+					setTimeout(onContainerTweeenDone, KCore.tweenDur * 1000);
 				}
 			} else if (stage) {
 				scroll.refresh();
 			}
-			if (allowPaging && len>0 && container.height < scroll.height) {
+			if (allowPaging && len>0 && offsetY <= scroll.height) {
 				dispatchEvent(new Event(KList.NEED_PAGING));
 			}
 		}
@@ -475,7 +501,7 @@ package com.kcly.component.container {
 			return offsetY;
 		}
 		
-		private function onContainerTweeenDone():void {
+		protected function onContainerTweeenDone():void {
 			if (stage) {
 				scroll.refresh();
 			}
@@ -508,8 +534,10 @@ package com.kcly.component.container {
 				_loading = null;
 				loadingLen = 0;
 			}
-			if (needRreshScroll>0) {
-				container.y += needRreshScroll;
+			if (needRreshScroll > 0) {
+				if (container.height>scroll.height) {
+					container.y += needRreshScroll;
+				}
 				scroll.refresh();
 			}
 		}

@@ -62,7 +62,7 @@ package com.kcly.component.control {
 			tf.visible = false;
 			tf.multiline = tf.wordWrap = true;
 			tf.autoSize = TextFieldAutoSize.LEFT;
-			setTimeout(_url, 500)
+			setTimeout(_url, 400)
 		}
 		
 		public function set useEllipsis(bool:Boolean):void {

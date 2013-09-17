@@ -111,18 +111,28 @@ package com.kcly.component.control {
 			maskBorder.graphics.beginFill(0xffffff, 1);
 			maskBorder.graphics.drawRoundRect(0, 0, _width, _height, _height, _height); 
 			addChildAt(maskBorder, 0);
+
+			addEventListener(Event.ADDED_TO_STAGE, onAdded);
+		}
+		
+		private function onAdded(evt:Event):void {
+			removeEventListener(Event.ADDED_TO_STAGE, onAdded);
 			
-			maskBorder.addEventListener(MouseEvent.CLICK, onClick)
-			maskBorder.addEventListener(MouseEvent.MOUSE_DOWN, onTouchDown)
-			addEventListener(Event.REMOVED_FROM_STAGE, onRemoved)
+			maskBorder.addEventListener(MouseEvent.CLICK, onClick);
+			maskBorder.addEventListener(MouseEvent.MOUSE_DOWN, onTouchDown);
+			
+			addEventListener(Event.REMOVED_FROM_STAGE, onRemoved);
 		}
 		
 		private function onRemoved(evt:Event):void {
 			removeEventListener(Event.REMOVED_FROM_STAGE, onRemoved);
+			
+			removeEventListener(MouseEvent.MOUSE_MOVE, onTouchMoving);
 			maskBorder.removeEventListener(MouseEvent.CLICK, onClick);
 			maskBorder.removeEventListener(MouseEvent.MOUSE_DOWN, onTouchDown);
 			stage.removeEventListener(MouseEvent.MOUSE_UP, onTouchUp);
-			removeEventListener(MouseEvent.MOUSE_MOVE, onTouchMoving);
+
+			addEventListener(Event.ADDED_TO_STAGE, onAdded);
 		}
 		
 		private function onTouchDown(evt:MouseEvent):void {
